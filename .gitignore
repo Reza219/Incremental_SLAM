@@ -1,0 +1,57 @@
+# =========================
+# MATLAB / Octave
+# =========================
+
+# Autosave / backup
+*.asv
+*.m~*
+*.bak
+*.autosave
+*.autosave.*
+
+# Compiled MEX files
+*.mex*
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+
+# Simulink / codegen
+slprj/
+sccprj/
+codegen/
+
+# Octave session
+octave-workspace
+
+# =========================
+# Data & results
+# =========================
+
+# Ignore intermediate data, logs, and experiment outputs
+results/
+logs/
+*.csv
+*.txt
+
+# Keep all .mat files (needed for ground-truth)
+!*.mat
+
+# =========================
+# Figures & reports
+# =========================
+*.fig
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.eps
+
+# =========================
+# System / editor files
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
