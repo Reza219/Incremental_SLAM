@@ -57,8 +57,7 @@ while true
       graph.x = [graph.x; vals];
 
     case 'EDGE2'
-      if numel(tok) < 13
-        % Some TORO files have at least 12 tokens after tag; skip if too short
+      if numel(tok) < 12
         continue;
       end
       fromId = int32(str2double(tok{2}));
