@@ -29,8 +29,13 @@ function [affected_vars, affected_edge_ids, affected_nodes] = find_affected(g, d
 % ---- Validate ------------------------------------------------------------
 assert(isvector(dxa) && isvector(affected_vars) && numel(dxa)==numel(affected_vars), ...
   'find_affected:SizeMismatch', 'dxa and affected_vars must be vectors of equal length.');
-assert(isfield(g,'var2node') && numel(g.var2node) >= max(affected_vars(:)), ...
-  'find_affected:Var2NodeMissing', 'g.var2node missing or too small.');
+
+% Early exit if nothing to check (SPO may pass an empty set)
+if isempty(affected_vars) || isempty(dxa)
+  affected_nodes    = [];
+  affected_edge_ids = [];
+  return;
+end
 
 % ---- 1) Threshold variables ---------------------------------------------
 significant = abs(dxa(:)) > dx_th;
@@ -44,10 +49,13 @@ if isempty(affected_vars)
 end
 
 % ---- 2) Vars -> node ids ------------------------------------------------
+assert(isfield(g,'var2node') && numel(g.var2node) >= max(affected_vars(:)), ...
+  'find_affected:Var2NodeMissing', 'g.var2node missing or too small.');
+
 affected_nodes = unique(g.var2node(affected_vars));
 
 % ---- 3) Collect all vars & edges per affected node ----------------------
-nNodes = numel(affected_nodes);
+nNodes     = numel(affected_nodes);
 var_cells  = cell(nNodes,1);
 edge_cells = cell(nNodes,1);
 
@@ -55,48 +63,38 @@ for i = 1:nNodes
   nid = affected_nodes(i);
   key = sprintf('id%d', nid);
 
-  if ~isfield(g.idLookup, key)
-    % Node not known in lookup; skip gracefully
-    var_cells{i}  = []; %#ok<*AGROW>
-    edge_cells{i} = [];
-    continue;
-  end
-
-  node = g.idLookup.(key);
-
-  % Variables belonging to this node (convert 0-based offset to 1-based)
-  if isfield(node,'offset') && isfield(node,'dimension') && node.dimension > 0
-    vstart = node.offset + 1;
-    var_cells{i} = vstart:(vstart + node.dimension - 1);
+  if isfield(g.idLookup, key)
+    node = g.idLookup.(key);
+    if isfield(node,'offset') && isfield(node,'dimension') && node.dimension > 0
+      vstart       = node.offset + 1;                 % 1-based
+      var_cells{i} = vstart:(vstart + node.dimension - 1);
+    else
+      var_cells{i} = [];
+    end
+    if isfield(node,'edges') && ~isempty(node.edges)
+      edge_cells{i} = node.edges(:);
+    else
+      edge_cells{i} = [];
+    end
   else
-    var_cells{i} = [];
-  end
-
-  % Incident edges (optional field)
-  if isfield(node,'edges') && ~isempty(node.edges)
-    edge_cells{i} = node.edges(:);
-  else
+    var_cells{i}  = [];
     edge_cells{i} = [];
   end
 end
 
 % ---- 4) Flatten & deduplicate -------------------------------------------
-if any(cellfun(@isempty, var_cells))
-  % If some cells are empty, vertcat([]) is fine; guard for all-empty
-  if all(cellfun(@isempty, var_cells)), affected_vars = []; else, affected_vars = unique(vertcat(var_cells{:})); end
+if all(cellfun(@isempty, var_cells))
+  affected_vars = [];
 else
   affected_vars = unique(vertcat(var_cells{:}));
 end
 
 if isempty(affected_vars)
-  % No variables after expansion: no edges either
   affected_edge_ids = [];
-  return;
-end
-
-if all(cellfun(@isempty, edge_cells))
+elseif all(cellfun(@isempty, edge_cells))
   affected_edge_ids = [];
 else
   affected_edge_ids = unique(vertcat(edge_cells{:}));
 end
+
 end
