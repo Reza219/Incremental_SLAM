@@ -32,12 +32,12 @@ function [g_current, edge_nodes, new_nodes, edge_vars, loop_closure] = update_gr
 assert(isstruct(g) && isfield(g,'edges') && isfield(g,'idLookup'), ...
   'update_graph:InvalidG', 'g must have .edges and .idLookup');
 if ~exist('g_current','var') || isempty(g_current)
-  g_current = struct('x',zeros(0,1), 'edges', g.edges([]), 'idLookup', struct, 'var2node', zeros(0,1));
+  g_current = struct('x',zeros(0,1), 'edges', g.edges([]), 'idLookup', struct(), 'var2node', zeros(0,1));
 else
   if ~isfield(g_current,'x'),        g_current.x        = zeros(0,1); end
   if ~isfield(g_current,'edges'),    g_current.edges    = g.edges([]); end
-  if ~isfield(g_current,'idLookup'), g_current.idLookup = struct;      end
-  if ~isfield(g_current,'var2node'), g_current.var2node = zeros(0,1);  end
+  if ~isfield(g_current,'idLookup'), g_current.idLookup = struct();     end
+  if ~isfield(g_current,'var2node'), g_current.var2node = zeros(0,1);   end
 end
 
 edge_ids = edge_ids(:).';
@@ -52,7 +52,7 @@ to_ids   = arrayfun(@(e) getfield_safe(e,'to',NaN),   edges); %#ok<GFLD>
 edge_nodes = unique([from_ids(~isnan(from_ids)), to_ids(~isnan(to_ids) & to_ids~=0)]);
 
 % Parse existing node ids in g_current
-id_fields = fieldnames(g_current.idLookup);
+id_fields  = fieldnames(g_current.idLookup);
 seen_nodes = zeros(1, numel(id_fields));
 for k = 1:numel(id_fields)
   nk = sscanf(id_fields{k}, 'id%d');
@@ -62,13 +62,19 @@ seen_nodes = seen_nodes(~isnan(seen_nodes));
 
 % New nodes are those referenced by edges but not yet in g_current
 new_nodes = setdiff(edge_nodes, seen_nodes);
-edge_vars = []; % will be filled after adding nodes
+edge_vars = []; % filled after adding nodes
 
 % ---- Step 2: Loop-closure detection (persistent) ------------------------
 persistent lc_state
 if isempty(lc_state), lc_state = []; end
-loop_closure = detect_loop_closure_unordered(edges, lc_state, lc_gap);
-lc_state = loop_closure; % let detector carry its own state forward as needed
+% Guard: if lc_state got corrupted (e.g., set to logical), reset it
+if islogical(lc_state) || ~isstruct(lc_state) ...
+   || ~isfield(lc_state,'pose_order') || ~isfield(lc_state,'lm2orders') ...
+   || ~isfield(lc_state,'next_order')
+  lc_state = [];
+end
+% IMPORTANT: capture BOTH outputs (flag, state)
+[loop_closure, lc_state] = detect_loop_closure_unordered(edges, lc_state, lc_gap);
 
 % ---- Step 3: Add new nodes ----------------------------------------------
 if ~isempty(new_nodes)
@@ -93,17 +99,20 @@ if ~isempty(new_nodes)
       info = g.idLookup.(key);
       dim  = info.dimension;
 
-      % Copy idLookup entry and assign a new offset (0-based)
+      % Copy idLookup entry and assign a new offset (0-based) in g_current
       g_current.idLookup.(key) = info;
       g_current.idLookup.(key).offset = numel(g_current.x) + pos - 1;
 
-      % Copy initial state from g.x (global) to g_current.x
-      src = (info.offset + 1) : (info.offset + dim);
+      % Copy initial state from GLOBAL g.x
+      src = (info.offset + 1) : (info.offset + dim);      % global indices
       dst = pos:(pos+dim-1);
 
       newX(dst)        = g.x(src);
       newVar2node(dst) = nid;
-      newEdgeVars(dst) = src;
+
+      % >>> IMPORTANT: record variables in g_current indexing, not global
+      cur_start = g_current.idLookup.(key).offset + 1;     % 1-based current
+      newEdgeVars(dst) = cur_start:(cur_start + dim - 1);
 
       pos = pos + dim;
     end
@@ -111,7 +120,9 @@ if ~isempty(new_nodes)
     % Append to current graph
     g_current.x        = [g_current.x; newX];
     g_current.var2node = [g_current.var2node; newVar2node];
-    edge_vars          = unique(newEdgeVars);
+
+    % Edge vars now refer to g_current.x indices (not global g.x)
+    edge_vars = unique(newEdgeVars);
   end
 end
 
@@ -134,7 +145,7 @@ for e = 1:n_new_edges
     'Missing from-node id%d in g_current', ei.from);
   ei.fromIdx = g_current.idLookup.(from_key).offset + 1;
 
-  if etype == 'G'
+  if strcmp(etype,'G')
     % GNSS unary: toIdx = 0
     ei.toIdx = 0;
   else
@@ -161,7 +172,7 @@ for e = 1:n_new_edges
   end
 
   % to node (if binary / non-GNSS)
-  if ~(isfield(ei,'type') && ~isempty(ei.type) && ei.type == 'G')
+  if ~(isfield(ei,'type') && ~isempty(ei.type) && strcmp(ei.type,'G'))
     tk = sprintf('id%d', ei.to);
     if ~isfield(g_current.idLookup.(tk), 'edges') || isempty(g_current.idLookup.(tk).edges)
       g_current.idLookup.(tk).edges = new_edge_indices(e);
@@ -177,7 +188,6 @@ if isempty(g_current.edges)
 else
   g_current.edges(end+1:end+n_new_edges) = edges;
 end
-
 end
 
 % ========== Local utility =================================================
