@@ -7,26 +7,27 @@ function x_subset = solve_affected(R, b_perm, affected, p, parent, alpha)
 % DESCRIPTION
 %   Solves A*x = b but returns only x(affected). Assumes R is an upper
 %   Cholesky factor of A(p,p) (i.e., A_perm = R' * R), where p is the
-%   permutation used to form A(p,p). The method:
-%     1) Maps the requested variables to the permuted domain.
-%     2) Computes the elimination-tree reach (dynamic set).
-%     3) Reorders to [static; reach], reuses cached solves on the static block.
-%     4) Solves the reduced system and scatters back to original order.
+%   column permutation used to form A(p,p).
+%   Steps:
+%     1) Map requested variables to the permuted domain.
+%     2) Compute elimination-tree reach (dynamic set).
+%     3) Reorder to [static; reach]; reuse cached solves on the static block.
+%     4) Solve reduced system and scatter back to original order.
 %
 % INPUTS
 %   R        : (n×n) upper-triangular Cholesky of A(p,p)
 %   b_perm   : (n×1) permuted RHS (b_perm = J(:,p)' * r)
-%   affected : vector of variable indices in the ORIGINAL (unpermuted) order
-%   p        : permutation vector mapping perm→orig (A_perm = A(p,p)); default 1:n
-%   parent   : elimination tree parent array over the permuted ordering (n×1), >=0
+%   affected : vector of variable indices in the ORIGINAL order
+%   p        : permutation vector (size n) such that A_perm = A(p,p)
+%   parent   : elimination tree over the permuted ordering (n×1), parent(i)=0/<=0 for root
 %   alpha    : scalar in (0,1]; if numel(affected)/n > alpha, do full solve (default 0.5)
 %
 % OUTPUT
 %   x_subset : x(affected) exactly as from a full solve
 %
 % NOTES
-%   - MATLAB/Octave compatible. Uses persistent cache keyed by the static set.
-%   - If affected is empty, returns [] immediately.
+%   - MATLAB/Octave compatible.
+%   - Handles empty static or dynamic blocks robustly (Octave-safe empties).
 
   n = numel(b_perm);
   if nargin < 4 || isempty(p),       p = (1:n)'; end
@@ -34,11 +35,12 @@ function x_subset = solve_affected(R, b_perm, affected, p, parent, alpha)
   if nargin < 6 || isempty(alpha),   alpha = 0.5; end
 
   % --- Basic validation
-  assert(isvector(b_perm) && numel(p)==n && all(p>=1 & p<=n), 'solve_affected:BadInputs');
+  assert(isvector(b_perm) && numel(b_perm)==n, 'solve_affected:BadRHS');
   assert(isequal(size(R), [n,n]), 'solve_affected:BadR');
+  assert(isvector(p) && numel(p)==n && all(p>=1 & p<=n), 'solve_affected:BadPerm');
   affected = affected(:);
   if isempty(affected), x_subset = []; return; end
-  assert(all(affected>=1), 'solve_affected:BadAffected');
+  assert(all(affected>=1), 'solve_affected:BadAffectedIdx');
 
   % --- Full solve fallback if request is large
   if numel(affected)/n > alpha
@@ -65,17 +67,20 @@ function x_subset = solve_affected(R, b_perm, affected, p, parent, alpha)
     if ~visited(i)
       visited(i) = true;
       pi = parent(i);
-      if pi > 0, stack(end+1) = pi; end %#ok<AGROW>
+      if ~isempty(pi) && pi > 0
+        stack(end+1) = pi; %#ok<AGROW>
+      end
     end
   end
-  reach  = find(visited);                % dynamic block (R)
-  static = setdiff((1:n)', reach);       % static block (U), stays unchanged
+  reach  = find(visited);           % dynamic block
+  static = setdiff((1:n)', reach);  % static block
 
   % Local reordering: [static; reach]
   idx_order = [static; reach];
   R2 = R(idx_order, idx_order);
   b2 = b_perm(idx_order);
   nU = numel(static);
+  nR = numel(reach);
 
   % === CACHE STATIC BLOCK SOLVE ===
   persistent U_prev Ruu Tsolve Usolve
@@ -85,13 +90,15 @@ function x_subset = solve_affected(R, b_perm, affected, p, parent, alpha)
       Tsolve = @(rhs) Ruu' \ rhs;   % forward (since Ruu is upper)
       Usolve = @(y)    Ruu  \ y;    % back-substitution
     else
-      % Empty static part
-      Ruu = []; Tsolve = @(rhs) rhs; Usolve = @(y) y;
+      % Empty static block
+      Ruu = [];
+      Tsolve = @(rhs) rhs;
+      Usolve = @(y)    y;
     end
     U_prev = static;
   end
 
-  % Static block solve
+  % --- Solve static block (if present)
   if nU > 0
     y_u = Tsolve(b2(1:nU));
     x_u = Usolve(y_u);
@@ -99,19 +106,31 @@ function x_subset = solve_affected(R, b_perm, affected, p, parent, alpha)
     y_u = []; x_u = [];
   end
 
-  % Dynamic RHS and solve
-  Rur = R2(1:nU, nU+1:end);
-  b_eff = b2(nU+1:end) - (Rur.' * y_u);
-  Rrr = R2(nU+1:end, nU+1:end);
-  y_r = Rrr' \ b_eff;
-  x_r = Rrr  \ y_r;
+  % --- Dynamic RHS and solve (Octave-safe guards for empty blocks)
+  if nR > 0
+    Rur   = R2(1:nU, nU+1:end);     % size: nU × nR (possibly 0×nR)
+    Rrr   = R2(nU+1:end, nU+1:end); % size: nR × nR
+    if nU > 0
+      % Safe: only form product if static block exists
+      b_eff = b2(nU+1:end) - (Rur.' * y_u);
+    else
+      b_eff = b2(nU+1:end);
+    end
+    % Solve dynamic block
+    y_r = Rrr' \ b_eff;
+    x_r = Rrr  \ y_r;
+  else
+    x_r = [];
+  end
 
-  % Reconstruct permuted solution on requested support
-  x_local = [x_u; x_r];
+  % --- Reconstruct permuted solution
+  x_perm_local = [x_u; x_r];        % matches idx_order
   x_perm = zeros(n,1);
-  x_perm(idx_order) = x_local;
+  if ~isempty(idx_order)
+    x_perm(idx_order) = x_perm_local;
+  end
 
-  % Scatter to original ordering and return requested entries
+  % --- Scatter to original ordering and return requested entries
   x_full = zeros(n,1);
   x_full(p) = x_perm;
   x_subset = x_full(affected);
