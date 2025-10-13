@@ -158,6 +158,11 @@ for it = 1:numIterations
         error('Unknown gating: %s (use IGG | LCG | none)', gating);
     end
 
+    % ---- GN refinement on affected vars ----
+    if isempty(affected_vars)
+      continue;                        % nothing to do this increment
+    end
+    
     dx = zeros(nx,1);
     for k = 1:max_GNi
       % solve on affected vars
