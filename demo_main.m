@@ -5,8 +5,8 @@ addpath('tools');
 % =========================
 % Config
 % =========================
-dataset   = 'FR079';          % {'MIT','Intel','CSAIL','FR079','FRH','MITP'}
-gating    = 'IGG';           % {'IGG','LCG','none'}  -> info-gain / loop-closure / no gating
+dataset   = 'MIT';          % {'MIT','Intel','CSAIL','FR079','FRH','MITP'}
+gating    = 'IGG';          % {'IGG','LCG','none'}  -> info-gain / loop-closure / no gating
 use_spo   = true;           % true = selective partial optimization (SPO); false = classic full GN
 max_GNi   = 10;
 batchSize = 1;
