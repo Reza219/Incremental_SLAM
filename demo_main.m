@@ -5,9 +5,9 @@ addpath('tools');
 % =========================
 % Config
 % =========================
-dataset   = 'MIT';      % {'MIT','Intel','CSAIL','FR079','FRH','MITP'}
-gating    = 'IGG';      % {'IGG','LCG','none'}  -> info-gain / loop-closure / no gating
-use_spo   = true;       % true = selective partial optimization (SPO); false = classic full GN
+dataset   = 'FR079';          % {'MIT','Intel','CSAIL','FR079','FRH','MITP'}
+gating    = 'IGG';           % {'IGG','LCG','none'}  -> info-gain / loop-closure / no gating
+use_spo   = true;           % true = selective partial optimization (SPO); false = classic full GN
 max_GNi   = 10;
 batchSize = 1;
 
@@ -115,15 +115,19 @@ for it = 1:numIterations
   current_batch_start = batch_end + 1;
 
   % ---- update graph with new edges/nodes ----
-  [g_current, edge_nodes, new_nodes, edge_vars, loop_closure] = update_graph(edge_ids, g, g_current, lc_gap);
+  [g_current, edge_nodes, new_nodes, new_vars, loop_closure] = update_graph(edge_ids, g, g_current, lc_gap);
   lc(it) = loop_closure;
 
   % ---- linearize new edges & factorize ----
   [R, b, J, r, edge_J_index, p, parent] = linearize_new(J, r, edge_J_index, g_current, edge_ids, g);
 
   % flop estimate for new cols
-  nnz_cols = full(sum(R~=0,1));
-  upd0 = sum(nnz_cols(edge_vars).^2);
+  if ~isempty(new_vars)
+    nnz_cols = full(sum(R~=0,1));
+    upd0 = sum(nnz_cols(new_vars).^2);
+  else
+    upd0 = 0;
+  endif
   flops_update = [flops_update; upd0]; %#ok<AGROW>
   flops_update_inc(it) = flops_update_inc(it) + upd0;
 
@@ -145,14 +149,14 @@ for it = 1:numIterations
         if di(it) > ent_th
           affected_vars = 1:nx;
         else
-          affected_vars = unique(edge_vars(:)).';
+          affected_vars = unique(new_vars(:)).';
         end
       case 'LCG'
         c = color_SPO_LCG;
         if lc(it)
           affected_vars = 1:nx;
         else
-          affected_vars = unique(edge_vars(:)).';
+          affected_vars = unique(new_vars(:)).';
         end
       otherwise
         error('Unknown gating: %s (use IGG | LCG | none)', gating);
@@ -162,7 +166,7 @@ for it = 1:numIterations
     if isempty(affected_vars)
       continue;                        % nothing to do this increment
     end
-    
+
     dx = zeros(nx,1);
     for k = 1:max_GNi
       % solve on affected vars
@@ -315,4 +319,4 @@ fprintf('Avg   normalized error  %1.6g\n', mean(err));
 fprintf('Final ATE (RMSE)        %1.6g\n', ate_rmse(end));
 fprintf('Avg   ATE (RMSE)        %1.6g\n', mean(ate_rmse));
 fprintf('Avg   solve FLOPs       %1.6g\n', sum(flops_solve)/numIterations);
-fprintf('Avg   update FLOPs      %1.6g\n', sum(flops_update)/numIterations);
+fprintf('Avg   update FLOPs      %1.8g\n', sum(flops_update)/numIterations);
