@@ -1,8 +1,8 @@
-function [g_current, edge_nodes, new_nodes, edge_vars, loop_closure] = update_graph(edge_ids, g, g_current, lc_gap)
+function [g_current, edge_nodes, new_nodes, new_vars, loop_closure] = update_graph(edge_ids, g, g_current, lc_gap)
 % UPDATE_GRAPH  Update the incremental graph with new edges (and any new nodes).
 %
 % SYNTAX
-%   [g_current, edge_nodes, new_nodes, edge_vars, loop_closure] = ...
+%   [g_current, edge_nodes, new_nodes, new_vars, loop_closure] = ...
 %       update_graph(edge_ids, g, g_current, lc_gap)
 %
 % DESCRIPTION
@@ -21,7 +21,7 @@ function [g_current, edge_nodes, new_nodes, edge_vars, loop_closure] = update_gr
 %   g_current   : updated graph
 %   edge_nodes  : unique node ids referenced by the new edges
 %   new_nodes   : node ids that were added to g_current in this call
-%   edge_vars   : variable indices (in global g.x) belonging to the newly added nodes
+%   new_vars    : variable indices (in global g.x) belonging to the newly added nodes
 %   loop_closure: result of detect_loop_closure_unordered on these edges
 %
 % NOTES
@@ -62,7 +62,7 @@ seen_nodes = seen_nodes(~isnan(seen_nodes));
 
 % New nodes are those referenced by edges but not yet in g_current
 new_nodes = setdiff(edge_nodes, seen_nodes);
-edge_vars = []; % filled after adding nodes
+new_vars = []; % filled after adding nodes
 
 % ---- Step 2: Loop-closure detection (persistent) ------------------------
 persistent lc_state
@@ -122,7 +122,7 @@ if ~isempty(new_nodes)
     g_current.var2node = [g_current.var2node; newVar2node];
 
     % Edge vars now refer to g_current.x indices (not global g.x)
-    edge_vars = unique(newEdgeVars);
+    new_vars = unique(newEdgeVars);
   end
 end
 
