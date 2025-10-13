@@ -26,16 +26,17 @@ function [affected_vars, affected_edge_ids, affected_nodes] = find_affected(g, d
 %   - MATLAB R2020b+ / GNU Octave 7+ compatible.
 %   - If a node lacks `.edges`, it contributes no edges (handled gracefully).
 
+% ---- Early exit if empty (SPO/gating may pass an empty set) ------------------
+if isempty(affected_vars) || isempty(dxa)
+  affected_vars     = [];
+  affected_edge_ids = [];
+  affected_nodes    = [];
+  return;
+end
+
 % ---- Validate ------------------------------------------------------------
 assert(isvector(dxa) && isvector(affected_vars) && numel(dxa)==numel(affected_vars), ...
   'find_affected:SizeMismatch', 'dxa and affected_vars must be vectors of equal length.');
-
-% Early exit if nothing to check (SPO may pass an empty set)
-if isempty(affected_vars) || isempty(dxa)
-  affected_nodes    = [];
-  affected_edge_ids = [];
-  return;
-end
 
 % ---- 1) Threshold variables ---------------------------------------------
 significant = abs(dxa(:)) > dx_th;
