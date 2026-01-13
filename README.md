@@ -1,6 +1,6 @@
 # Incremental_SLAM
 MATLAB/Octave code and data for implementing the algorithms and reproducing the results of the paper:<br>
-"Efficient Incremental SLAM via Information-Guided and Selective Optimization".<br>
+"Efficient Incremental SLAM via Information-Guided and Selective Optimization" \url{https://arxiv.org/xxx}.<br>
 
 
 Animated examples:<br>
