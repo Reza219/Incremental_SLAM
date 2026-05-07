@@ -1,12 +1,51 @@
 # Incremental_SLAM
-MATLAB/Octave code and data for implementing the algorithms and reproducing the results of the paper:<br>
-"Efficient Incremental SLAM via Information-Guided and Selective Optimization" (https://arxiv.org/pdf/2601.08110).<br>
 
+Code and data for the paper:
 
-Animated examples:<br>
-https://www.youtube.com/watch?v=J5eVcUjuUBw<br>
-https://www.youtube.com/watch?v=59vPl3Zh7F8<br>
-https://www.youtube.com/watch?v=fLFyXeX8Vbc<br>
-https://www.youtube.com/watch?v=dFoqH3nJXW8<br>
-https://www.youtube.com/watch?v=sFVPo_RIFBA<br>
-https://www.youtube.com/watch?v=xeePpAjU87I
+**Efficient Incremental SLAM via Information-Guided Gating and Selective Partial Optimization**  
+Reza Arablouei  
+*Robotics*, 2026, 15(5), 87  
+Published article: https://www.mdpi.com/2218-6581/15/5/87  
+DOI: https://doi.org/10.3390/robotics15050087
+
+This repository contains the MATLAB/Octave implementation used to reproduce the main experimental results in the paper. The method combines **information-guided gating (IGG)** and **selective partial optimization (SPO)** for efficient incremental SLAM back-end optimization.
+
+## Repository structure
+
+- The repository root contains the MATLAB/Octave implementation and data used for the paper experiments.
+- `cpp/` contains an experimental C++ implementation/prototype. It includes online graph/state expansion, backend comparison hooks, paper-style metric reporting, and algorithmic FLOP accounting. The C++ implementation is provided for development and reuse, but it has not yet been fully validated against all paper tables on all benchmark datasets.
+
+For reproducing the published paper results, please treat the MATLAB/Octave implementation as the reference implementation.
+
+## C++ prototype status
+
+The C++ implementation in `cpp/` is a research prototype rather than the primary reproduction artifact. It is useful for exploring compiled implementations of the proposed ideas, including sparse numerical backends and online graph expansion. However, it should not yet be interpreted as a fully validated replacement for the MATLAB/Octave pipeline.
+
+See `cpp/README.md` for C++ build instructions, backend notes, and benchmark commands.
+
+## Animated examples
+
+- https://www.youtube.com/watch?v=J5eVcUjuUBw
+- https://www.youtube.com/watch?v=59vPl3Zh7F8
+- https://www.youtube.com/watch?v=fLFyXeX8Vbc
+- https://www.youtube.com/watch?v=dFoqH3nJXW8
+- https://www.youtube.com/watch?v=sFVPo_RIFBA
+- https://www.youtube.com/watch?v=xeePpAjU87I
+
+## Citation
+
+If you use this code or data, please cite:
+
+```bibtex
+@article{Arablouei2026IncrementalSLAM,
+  author  = {Arablouei, Reza},
+  title   = {Efficient Incremental SLAM via Information-Guided Gating and Selective Partial Optimization},
+  journal = {Robotics},
+  year    = {2026},
+  volume  = {15},
+  number  = {5},
+  article = {87},
+  doi     = {10.3390/robotics15050087},
+  url     = {https://www.mdpi.com/2218-6581/15/5/87}
+}
+```
