@@ -7,7 +7,10 @@ This directory contains a **Python prototype** of the incremental SLAM backend a
 The implementation focuses on readable, testable versions of the main IGG/SPO algorithmic ideas:
 
 - **Information-Guided Gating (IGG)**: compute the log-determinant information surrogate
-  \(\eta_t = \sum_i \log |\rho_{t,i}| = \frac{1}{2}\log\det(J_t^T J_t)\), then use the detrended increment
+  ```math
+  \eta_t = \sum_i \log |\rho_{t,i}| = \frac{1}{2}\log\det(J_t^T J_t)
+  ```
+  , then use the detrended increment
   \(\Delta\eta_t = \eta_t - (N_{t-1}/N_t)\eta_{t-1}\) to decide whether an increment should trigger a global active set.
 - **Selective Partial Optimization (SPO)**: solve/update only the active variables, prune converged node blocks, and expand the active set through incident graph edges.
 - **Paper-style accuracy metrics**: normalized chi-squared and ATE utilities are included for experimentation and regression checks.
