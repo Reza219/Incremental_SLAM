@@ -336,20 +336,6 @@ Until those checks are completed, describe this directory as an **experimental C
 
 ---
 
-## Recommended public-repo wording
-
-For the top-level repository README, the C++ implementation can be introduced with wording such as:
-
-```markdown
-## C++ prototype
-
-An experimental C++ implementation is provided in `cpp/`. It includes online graph expansion, backend comparison hooks, paper-style metric reporting, and algorithmic FLOP accounting. The MATLAB/Octave implementation remains the reference implementation for reproducing the paper results. The C++ implementation is provided for development and reuse, but has not yet been fully validated against all paper tables on all benchmark datasets.
-```
-
-This wording is intentionally conservative. It lets users access the C++ work without confusing it with the validated paper artifact.
-
----
-
 ## Citation
 
 If you use this repository, please cite:
