@@ -1,4 +1,4 @@
-# Incremental_SLAM
+# Incremental SLAM
 
 Code and data for the paper:
 
