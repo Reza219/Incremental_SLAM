@@ -47,14 +47,6 @@ cpp/
 
 The `scripts/` directory should contain only user-facing benchmark, summary, plotting, and release-check helpers.
 
-Milestone-specific audit scripts such as `audit_m70_*.py`, `audit_m71_*.py`, `smoke_audit_*.sh`, or symbolic-backend development scripts should either be omitted from the public upload or placed under a clearly marked developer-only location such as:
-
-```text
-cpp/dev/audits/
-```
-
-Do not mix these developer audit scripts with the normal `cpp/scripts/` folder, because they are not part of the standard reproduction workflow.
-
 ---
 
 ## Numerical backend boundaries
