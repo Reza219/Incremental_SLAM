@@ -38,11 +38,11 @@ cpp/
 ├── include/
 ├── src/
 ├── tests/
-├── scripts/
-│   ├── run_paper_pipeline_template.sh
-│   ├── run_backend_compare_template.sh
-│   ├── summarize_paper_results.py
-│   ├── plot_paper_curves.py
+└── scripts/
+    ├── run_paper_pipeline_template.sh
+    ├── run_backend_compare_template.sh
+    ├── summarize_paper_results.py
+    └── plot_paper_curves.py
 ```
 
 The `scripts/` directory should contain only user-facing benchmark, summary, plotting, and release-check helpers.
