@@ -43,13 +43,6 @@ cpp/
 │   ├── run_backend_compare_template.sh
 │   ├── summarize_paper_results.py
 │   ├── plot_paper_curves.py
-│   └── preflight_release_check.sh
-└── docs/
-    ├── PAPER_REPRODUCTION.md
-    ├── RELEASE_CHECKLIST.md
-    ├── CPP_PROTOTYPE_STATUS.md
-    ├── validation/
-    └── milestones/
 ```
 
 The `scripts/` directory should contain only user-facing benchmark, summary, plotting, and release-check helpers.
