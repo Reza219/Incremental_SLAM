@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "incremental-slam-python"
+version = "0.1.1"
+description = "Python prototype for IGG/SPO incremental SLAM algorithm development"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+cholmod = [
+  "scikit-sparse>=0.4",
+]
+test = [
+  "pytest>=7",
+]
+dev = [
+  "pytest>=7",
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["incremental_slam*"]
