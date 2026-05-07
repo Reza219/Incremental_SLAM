@@ -1,8 +1,14 @@
 # C++ Experimental Implementation for Incremental SLAM
 
-This directory contains an **experimental C++ implementation** of the incremental SLAM backend developed around IGG/SPO-style update logic, online graph/state expansion, paper-style metric reporting, and sparse numerical backend experiments.
+This directory contains an **experimental C++ implementation** of the incremental SLAM backend developed around information-guided gating (IGG), selective partial optimization (SPO), online graph/state expansion, paper-style metric reporting, and sparse numerical backend experiments.
 
-The **MATLAB/Octave code in the repository root remains the reference implementation for reproducing the paper results**. The C++ code is provided to support further development, testing, and reuse, but it has **not yet been fully validated against all paper tables on all benchmark datasets**.
+The associated paper has been published as:
+
+> Reza Arablouei, "Efficient Incremental SLAM via Information-Guided Gating and Selective Partial Optimization," *Robotics*, 15(5), 87, 2026.  
+> DOI: https://doi.org/10.3390/robotics15050087  
+> Article: https://www.mdpi.com/2218-6581/15/5/87
+
+The **MATLAB/Octave code in the repository root remains the reference implementation for reproducing the published paper results**. The C++ code is provided to support further development, testing, and reuse, but it has **not yet been fully validated against all paper tables on all benchmark datasets**.
 
 This implementation should be treated as a research prototype, not as a drop-in replacement for mature sparse linear-algebra packages such as CHOLMOD, nor as a fully validated production SLAM backend.
 
@@ -12,6 +18,7 @@ This implementation should be treated as a research prototype, not as a drop-in 
 
 | Item | Status |
 |---|---|
+| Published paper | *Robotics*, 15(5), 87, 2026 |
 | Reference paper reproduction path | MATLAB/Octave implementation in the repository root |
 | C++ implementation status | Experimental research prototype |
 | Online graph/state expansion | Supported via `FactorManager::ensure_state_size()` |
@@ -29,7 +36,7 @@ This implementation should be treated as a research prototype, not as a drop-in 
 
 ## Directory layout
 
-Recommended layout inside this `cpp/` directory:
+Current intended layout inside this `cpp/` directory:
 
 ```text
 cpp/
@@ -38,6 +45,7 @@ cpp/
 ├── include/
 ├── src/
 ├── tests/
+├── tools/
 └── scripts/
     ├── run_paper_pipeline_template.sh
     ├── run_backend_compare_template.sh
@@ -45,7 +53,7 @@ cpp/
     └── plot_paper_curves.py
 ```
 
-The `scripts/` directory should contain only user-facing benchmark, summary, plotting, and release-check helpers.
+The `scripts/` directory should contain only user-facing benchmark, summary, and plotting helpers. Milestone/audit scripts are development-history material and should not be placed in the public `cpp/scripts/` directory unless they are intentionally documented.
 
 ---
 
@@ -227,7 +235,7 @@ Use the helper script to run the three backend selections with the same algorith
 scripts/run_backend_compare_template.sh path/to/graph.g2o benchmark_outputs
 ```
 
-For release validation, compare at least these configurations:
+For validation, compare at least these configurations:
 
 ```text
 1. Dense Eigen fallback/backend sanity run
@@ -282,15 +290,7 @@ mean update FLOPs
 mean full-solve FLOPs for SPO variants
 ```
 
-See:
-
-```text
-docs/PAPER_REPRODUCTION.md
-```
-
-for dataset-specific threshold settings, plotting commands, and the current validation status.
-
-Important: this C++ pipeline is intended to reproduce the **reporting structure** of the paper. It has not yet been fully validated against every numeric entry in the paper tables on all datasets. Use the MATLAB/Octave implementation in the repository root as the reference reproduction path until that validation is complete.
+Important: this C++ pipeline is intended to reproduce the **reporting structure** of the published paper. It has not yet been fully validated against every numeric entry in the paper tables on all datasets. Use the MATLAB/Octave implementation in the repository root as the reference reproduction path until that validation is complete.
 
 ---
 
@@ -318,19 +318,7 @@ However, this C++ directory does not currently claim to internally synthesize th
 
 ---
 
-## Release preflight
-
-Run the static preflight check before local build/release validation:
-
-```bash
-scripts/preflight_release_check.sh
-```
-
-Then follow:
-
-```text
-docs/RELEASE_CHECKLIST.md
-```
+## Validation checklist before stronger claims
 
 Before presenting the C++ implementation as validated, run at least:
 
@@ -343,6 +331,8 @@ Before presenting the C++ implementation as validated, run at least:
 6. Summary script check
 7. Plot script check, if plots are to be included
 ```
+
+Until those checks are completed, describe this directory as an **experimental C++ implementation**, not as the primary reproduction artifact.
 
 ---
 
@@ -360,8 +350,22 @@ This wording is intentionally conservative. It lets users access the C++ work wi
 
 ---
 
-## Citation and reference implementation
+## Citation
 
-If you use this repository for reproducing the paper results, use the MATLAB/Octave code in the repository root as the reference path unless the C++ implementation has been explicitly validated for the relevant dataset and configuration.
+If you use this repository, please cite:
 
-If you use the C++ prototype, please cite the paper and clearly state that the C++ implementation is an experimental implementation.
+```bibtex
+@Article{Arablouei2026Robotics,
+  author  = {Arablouei, Reza},
+  title   = {Efficient Incremental SLAM via Information-Guided Gating and Selective Partial Optimization},
+  journal = {Robotics},
+  year    = {2026},
+  volume  = {15},
+  number  = {5},
+  article-number = {87},
+  doi     = {10.3390/robotics15050087},
+  url     = {https://www.mdpi.com/2218-6581/15/5/87}
+}
+```
+
+If you use the C++ prototype specifically, please state clearly that it is an experimental implementation.
